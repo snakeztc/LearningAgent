@@ -1,8 +1,8 @@
 package org.icep.rlm;
 
-import java.util.List;
-import java.util.Objects;
 import java.util.Stack;
+
+import org.icep.rlm.core.*;
 import org.icep.rlm.util.Constants;
 import java.util.Random;
 
@@ -30,14 +30,6 @@ public class RLM {
         totalReward = 0;
     }
 
-    private Choice makeChoice(List<Choice> choices) {
-        Random rand = new Random();
-        int listSize = choices.size();
-        int selectIndex = rand.nextInt(listSize-1 - 0 + 1) + 0;
-        return choices.get(selectIndex);
-    }
-
-
     /* Public methods */
 
     public static RLM getInstance() {
@@ -56,27 +48,53 @@ public class RLM {
         totalReward = 0;
     }
 
-    public void action(Object a) {
+    public void learnPolicy(Choice c) {
+        ChoiceFrame cf = new ChoiceFrame(c, env.getCurrentState());
+        // first encounter
+        if (choiceStack.isEmpty()) {
+            choiceStack.push(cf);
+            return;
+        }
+        ChoiceFrame pcf = choiceStack.pop();
+        Double tdTarget = discountReward;
+        // update the q value of previous choice point
+        if (c != null) {
+            tdTarget = discountReward + Math.pow(lambda, numSteps)*qTable.getQValue(cf.state, cf.choice.content);
+        }
+        Double tdError = tdTarget - qTable.getQValue(pcf.state, pcf.choice.content);
+        Double newQv = qTable.getQValue(pcf.state, pcf.choice.content) + learningRate /numEpisodes * tdError;
+        qTable.putQValue(pcf.state, pcf.choice.content, newQv);
+        // reset
+        choiceStack.push(cf);
+        numSteps = 0;
+        discountReward = 0;
+    }
+
+    public void action(Action a) {
         programCounter = Constants.pcState.ACTION;
-        State s = this.env.applyAction(a);
-        double r = this.env.getReward(s);
+        a.execute();
+        TaxiEnvironment.TaxiState s = (TaxiEnvironment.TaxiState)this.env.getCurrentState();
+        double r = this.env.rf.reward(s, a, null);
         totalReward += r;
+
+        int curX = (Integer) s.getValue("X");
+        int curY = (Integer) s.getValue("Y");
+        Boolean isOnCar = (Boolean) s.getValue("isOnCar");
+        System.out.println(curX + "_" + curY + "_" + isOnCar );
         programCounter = Constants.pcState.ACTION_EXIT;
         numSteps++;
     }
 
     public void call(Subroutine subroutine) {
         programCounter = Constants.pcState.CALL;
-        // TODO do something here
+        subroutine.execute();
         programCounter = Constants.pcState.CALL_EXIT;
 
     }
 
-    public void choose(List<Choice> choices) {
+    public void choose(ChoiceList choices) {
         programCounter = Constants.pcState.CHOOSE;
-        // make a decision
-        Choice decision = this.makeChoice(choices);
-        decision.start();
+        choices.execute();
         programCounter = Constants.pcState.CHOOSE_EXIT;
     }
 }

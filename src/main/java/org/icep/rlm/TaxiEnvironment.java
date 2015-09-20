@@ -1,87 +1,105 @@
 package org.icep.rlm;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.sun.tools.doclint.Env;
+import org.icep.rlm.core.*;
+import org.icep.rlm.auxillary.*;
 
 /**
  * Created by Tony on 9/17/15.
  */
-public class TaxiEnvironment extends Environment{
+public class TaxiEnvironment extends Environment implements TerminalFunction{
 
-    public class TaxiState extends State{
-        int mapHeight;
-        int mapWidth;
-        int x;
-        int y;
-        int px;
-        int py;
-        int destX;
-        int destY;
-        Boolean pOnCar;
+    int mapHeight;
+    int mapWidth;
+    int px;
+    int py;
+    int destX;
+    int destY;
+    int maxStep;
+    public int totalSteps;
+    public String name;
+
+    public class TaxiState extends EnvState {
+        public TaxiState() {
+            super();
+            ObjectInstance x = new ObjectInstance("X", 0);
+            addObject(x);
+            ObjectInstance y = new ObjectInstance("Y", 0);
+            addObject(y);
+            ObjectInstance isOnCar = new ObjectInstance("isOnCar", false);
+            addObject(isOnCar);
+        }
     }
 
-    TaxiState state;
+    public static class Movement extends Action {
+        public Movement(String name) {
+            super(name);
+        }
+        public void execute() {
+            TaxiEnvironment env = (TaxiEnvironment)RLM.getInstance().env;
+            env.applyAction(name);
+        }
 
+    }
     public TaxiEnvironment() {
-        state = new TaxiState();
-        state.mapHeight = 2;
-        state.mapWidth = 2;
-        state.x = 0;
-        state.y = 0;
-        state.px = state.mapHeight-1;
-        state.py = state.mapHeight-1;
-        state.destX = state.mapHeight-1;
-        state.destY = 0;
-        state.pOnCar = false;
+        super();
+        int size = 2;
+        mapHeight = size;
+        mapWidth = size;
+        px = mapHeight-1;
+        py = 0;
+        destX = mapHeight-1;
+        destY = mapHeight-1;
+        envState = new TaxiState();
+        rf = new UniformReward();
+        tf = this;
+        maxStep = size*10;
+        totalSteps = 0;
+        name = "Taxi";
+
     }
 
     @Override
     public TaxiState applyAction(Object action) {
         String a = (String) action;
         //check if the move is legal
-        return applyLegalMove(state, a);
-    }
-    @Override
-    public double getReward(State state) {
-        TaxiState s = (TaxiState) state;
-        if (s.pOnCar && s.x == s.destX && s.y == s.destY) {
-            return 10;
-        } else {
-            return -1;
-        }
-    }
-
-    @Override
-    public Boolean isTerminal(State state) {
-        TaxiState s = (TaxiState) state;
-        if (s.pOnCar && s.x == s.destX && s.y == s.destY) {
-            return true;
-        } else {
-            return false;
-        }
+        return applyLegalMove(a);
     }
 
     @Override
     public State getCurrentState() {
-        return state;
+        return envState;
     }
 
     /* Helpers */
-    TaxiState applyLegalMove(TaxiState s, String a) {
+    TaxiState applyLegalMove(String a) {
+        int curX = (Integer) envState.getValue("X");
+        int curY = (Integer) envState.getValue("Y");
+        Boolean isOnCar = (Boolean) envState.getValue("isOnCar");
         //check boundary
-        if (a.equals("up") && s.x - 1 >= 0) {
-            s.x--;
-        } else if (a.equals("down") && s.x + 1 <= s.mapHeight-1) {
-            s.x++;
-        } else if (a.equals("left") && s.y - 1 >= 0) {
-            s.y--;
-        } else if (a.equals("right") && s.y + 1 <= s.mapWidth-1) {
-            s.y++;
+        if (a.equals("up") && curX - 1 >= 0) {
+            envState.setValue("X", curX-1);
+        } else if (a.equals("down") && curX + 1 <= mapHeight-1) {
+            envState.setValue("X", curX+1);
+        } else if (a.equals("left") && curY - 1 >= 0) {
+            envState.setValue("Y", curY-1);
+        } else if (a.equals("right") &&  curY+ 1 <= mapWidth-1) {
+            envState.setValue("Y", curY+1);
         }
         // check if we should pick up passenger
-        if (!s.pOnCar && s.y == s.py && s.x == s.px) {
-            s.pOnCar = true;
+        if (!isOnCar && curY == py && curX == px) {
+            envState.setValue("isOnCar", true);
         }
-        return s;
+        totalSteps++;
+        return (TaxiState)envState;
+    }
+
+    public boolean isTerminal() {
+        int curX = (Integer) envState.getValue("X");
+        int curY = (Integer) envState.getValue("Y");
+        Boolean isOnCar = (Boolean) envState.getValue("isOnCar");
+
+        return totalSteps > maxStep || (isOnCar && curX == destX && curY == destY);
     }
 
 }

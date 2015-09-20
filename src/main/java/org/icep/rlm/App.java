@@ -1,5 +1,8 @@
 package org.icep.rlm;
 
+import org.icep.rlm.core.Choice;
+import org.icep.rlm.core.ChoiceList;
+import org.icep.rlm.core.Subroutine;
 import org.icep.rlm.util.Constants;
 
 import java.util.ArrayList;
@@ -14,22 +17,19 @@ public class App
 {
     public static void main( String[] args )
     {
-        Subroutine navigation = new Subroutine("navi");
+        RLM learner = RLM.getInstance();
         // make 4 choices
-        List<Choice> cl = new ArrayList<Choice>();
+        ChoiceList cl = new ChoiceList("root");
         List<String> actionName = Arrays.asList("up", "down", "left", "right");
         for (int i = 0; i < 4; i++) {
-            Choice c = new Choice();
-            c.type = Constants.choiceType.ACTION;
-            c.content = actionName.get(i);
+            TaxiEnvironment.Movement m = new TaxiEnvironment.Movement(actionName.get(i));
+            Choice c = new Choice(Constants.choiceType.ACTION, m);
             cl.add(c);
         }
-        RLM learner = RLM.getInstance();
         learner.startNewEpisode();
-        while(!learner.env.isTerminal(learner.env.getCurrentState())) {
+        while(!learner.env.tf.isTerminal()) {
             learner.choose(cl);
-            TaxiEnvironment.TaxiState s = (TaxiEnvironment.TaxiState)learner.env.getCurrentState();
-            System.out.println("x is " + s.x + " y is " + s.y + " with cum reward " + learner.totalReward);
         }
+        System.out.println("Cum reward " + learner.totalReward);
     }
 }
