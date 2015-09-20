@@ -682,7 +682,7 @@
       <workItem from="1442505389992" duration="57000" />
       <workItem from="1442511911576" duration="7999000" />
       <workItem from="1442675286197" duration="9248000" />
-      <workItem from="1442712981852" duration="45000" />
+      <workItem from="1442712981852" duration="52000" />
     </task>
     <task id="LOCAL-00001" summary="Add basic structure without learing&#10;">
       <created>1442713017610</created>
@@ -690,11 +690,17 @@
       <option name="project" value="LOCAL" />
       <updated>1442713017610</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Add basic structure without learing&#10;">
+      <created>1442713031266</created>
+      <option name="number" value="00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1442713031266</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="17349000" />
+    <option name="totallyTimeSpent" value="17356000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-1792" y="-211" width="1408" height="810" extended-state="0" />
@@ -821,8 +827,6 @@
           <caret line="18" column="0" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#274#275#0" expanded="true" />
-            <element signature="e#326#327#0" expanded="true" />
           </folding>
         </state>
       </provider>
